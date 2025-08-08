@@ -2,3 +2,6 @@
 dados_bcb.db
 previsoes.db
 /Relatórios
+/upgrades
+Scenario.spec
+build

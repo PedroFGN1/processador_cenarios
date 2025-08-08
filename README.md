@@ -70,6 +70,21 @@ Siga os passos abaixo para configurar e executar a aplicação:
     ```
     Este script criará o arquivo `dados_bcb.db` no diretório raiz do projeto com dados fictícios para as séries IPCA, SELIC e VENDAS_MENSAIS.
 
+6. **Criação de Executável .exe**
+
+    Para criar um executável `.exe`, execute este comando no terminal python no diretório raiz da aplicação.
+
+    ```bash
+    pyinstaller --noconsole --onefile --icon="assets/icon.ico" --add-data="scenarios_config.yaml;." --name="Scenario" main.py
+    ```
+
+    - `--noconsole`: este comando impede que a janela preta de terminal apareça por trás da janela da aplicação.
+    - `--onefile`: Cria um único arquivo `.exe`.
+    - `--icon="assets/icon.ico"`: Associa o ícone ao executável.
+    - `--add-data="frontend;frontend"`: Comando para aplicações Eel, inclui arquivos HTML, CSS e JS no diretório raiz do executável. 
+    - `--add-data="{}_config.yaml;."`: Inclui os arquivos de configuração `scenarios_config.yaml` no diretório raiz do executável.
+    - `--name="Scenario"`: Define o nome do arquivo de saída.
+
 ## Como Executar a Aplicação
 
 Após a instalação e configuração, execute a aplicação com o seguinte comando (certifique-se de que o ambiente virtual está ativado):
