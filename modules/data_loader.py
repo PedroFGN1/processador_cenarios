@@ -60,3 +60,28 @@ def load_historical_data(serie_id: str, db_path: Path) -> pd.DataFrame:
         logger.error(f"Erro ao carregar dados para a série {serie_id}: {e}")
         raise
 
+
+
+def get_available_series(db_path: Path) -> list:
+    """
+    Retorna uma lista de todos os IDs de série únicos disponíveis no banco de dados.
+
+    Args:
+        db_path (Path): Caminho para o banco de dados SQLite.
+
+    Returns:
+        list: Uma lista de strings com os IDs das séries disponíveis.
+    """
+    logger.info(f"Buscando séries disponíveis em: {db_path}")
+    sql = "SELECT DISTINCT serie_id FROM dados_bcb ORDER BY serie_id"
+    try:
+        with SqliteAdapter(str(db_path)) as adapter:
+            results = adapter.query(sql)
+            series_ids = [row["serie_id"] for row in results]
+            logger.info(f"Séries disponíveis encontradas: {series_ids}")
+            return series_ids
+    except Exception as e:
+        logger.error(f"Erro ao buscar séries disponíveis: {e}")
+        return []
+
+

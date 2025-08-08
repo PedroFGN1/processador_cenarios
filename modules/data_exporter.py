@@ -2,39 +2,44 @@ import pandas as pd
 import logging
 from pathlib import Path
 
-# Configura o logger para este módulo
 logger = logging.getLogger(__name__)
 
-def export_to_csv(data: list, filepath: Path) -> None:
+def export_dataframe_to_csv(df: pd.DataFrame, file_path: Path) -> bool:
     """
-    Exporta uma lista de dicionários para um arquivo CSV.
-    
+    Exporta um DataFrame para um arquivo CSV.
+
     Args:
-        data (list): Lista de dicionários com os dados a serem exportados
-        filepath (Path): Caminho completo para o arquivo CSV de destino
-    
-    Raises:
-        ValueError: Se a lista de dados estiver vazia
-        Exception: Para outros erros durante a exportação
+        df (pd.DataFrame): O DataFrame a ser exportado.
+        file_path (Path): O caminho completo para o arquivo CSV de saída.
+
+    Returns:
+        bool: True se a exportação for bem-sucedida, False caso contrário.
     """
-    if not data:
-        logger.warning("Nenhum dado fornecido para exportação")
-        raise ValueError("Nenhum dado fornecido para exportação")
-    
     try:
-        # Converte a lista de dicionários para DataFrame
-        df = pd.DataFrame(data)
-        
-        # Garante que o diretório de destino existe
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Exporta para CSV
-        df.to_csv(filepath, index=False, encoding='utf-8')
-        
-        logger.info(f"Dados exportados com sucesso para: {filepath}")
-        logger.info(f"Total de registros exportados: {len(data)}")
-        
+        df.to_csv(file_path, index=False, encoding="utf-8")
+        logger.info(f"DataFrame exportado com sucesso para CSV: {file_path}")
+        return True
     except Exception as e:
-        logger.error(f"Erro ao exportar dados para CSV: {e}")
-        raise
+        logger.error(f"Erro ao exportar DataFrame para CSV {file_path}: {e}")
+        return False
+
+def export_dataframe_to_excel(df: pd.DataFrame, file_path: Path) -> bool:
+    """
+    Exporta um DataFrame para um arquivo Excel.
+
+    Args:
+        df (pd.DataFrame): O DataFrame a ser exportado.
+        file_path (Path): O caminho completo para o arquivo Excel de saída.
+
+    Returns:
+        bool: True se a exportação for bem-sucedida, False caso contrário.
+    """
+    try:
+        df.to_excel(file_path, index=False, engine="openpyxl")
+        logger.info(f"DataFrame exportado com sucesso para Excel: {file_path}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao exportar DataFrame para Excel {file_path}: {e}")
+        return False
+
 

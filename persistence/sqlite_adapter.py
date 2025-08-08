@@ -29,6 +29,7 @@ class SqliteAdapter(BaseAdapter):
     def create_schema_if_not_exists(self):
         """
         Cria a tabela de resultados de previsão se ela não existir.
+        Adiciona colunas para métricas de avaliação se não existirem.
         """
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS resultados_previsao (
@@ -40,19 +41,42 @@ class SqliteAdapter(BaseAdapter):
             limite_inferior REAL,
             limite_superior REAL,
             modelo_utilizado TEXT NOT NULL,
-            parametros_modelo TEXT
+            parametros_modelo TEXT,
+            rmse REAL,
+            mae REAL,
+            mape REAL
         )
         """
         
         try:
             cursor = self.connection.cursor()
             cursor.execute(create_table_sql)
+            
+            # Adicionar colunas se não existirem (para compatibilidade com DBs existentes)
+            self._add_column_if_not_exists(cursor, "resultados_previsao", "rmse", "REAL")
+            self._add_column_if_not_exists(cursor, "resultados_previsao", "mae", "REAL")
+            self._add_column_if_not_exists(cursor, "resultados_previsao", "mape", "REAL")
+
             self.connection.commit()
             logging.info("Esquema do banco de dados verificado/criado com sucesso.")
         except Exception as e:
             logging.error(f"Erro ao criar esquema do banco de dados: {e}")
             raise
-    
+
+    def _add_column_if_not_exists(self, cursor, table_name, column_name, column_type):
+        """
+        Adiciona uma coluna a uma tabela se ela ainda não existir.
+        """
+        try:
+            cursor.execute(f"PRAGMA table_info({table_name})")
+            columns = [info[1] for info in cursor.fetchall()]
+            if column_name not in columns:
+                cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+                logging.info(f"Coluna {column_name} adicionada à tabela {table_name}.")
+        except Exception as e:
+            logging.error(f"Erro ao adicionar coluna {column_name} à tabela {table_name}: {e}")
+            raise
+
     def insert_many(self, table_name, data):
         """
         Insere múltiplos registros na tabela especificada.
@@ -67,8 +91,8 @@ class SqliteAdapter(BaseAdapter):
         
         # Obtém as colunas do primeiro registro
         columns = list(data[0].keys())
-        placeholders = ', '.join(['?' for _ in columns])
-        columns_str = ', '.join(columns)
+        placeholders = ", ".join(["?" for _ in columns])
+        columns_str = ", ".join(columns)
         
         sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
         
@@ -104,4 +128,3 @@ class SqliteAdapter(BaseAdapter):
         except Exception as e:
             logging.error(f"Erro ao executar consulta SQL: {e}")
             raise
-

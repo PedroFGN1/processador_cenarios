@@ -1,10 +1,12 @@
 import logging
 from pathlib import Path
 from datetime import datetime
+import pandas as pd
 
 from modules.data_loader import load_historical_data
 from modules.forecasting_model import forecast_factory
 from modules.results_processor import process_results
+from modules.model_evaluator import calculate_metrics # Importa a função de cálculo de métricas
 from persistence.sqlite_adapter import SqliteAdapter
 
 # Configura o logger para este módulo
@@ -36,13 +38,32 @@ def run_single_scenario(
         historical_data = load_historical_data(serie_id, data_db_path)
         logger.info(f"Dados históricos carregados para {serie_id}. Total de {len(historical_data)} registros.")
 
+        if historical_data.empty or len(historical_data) < horizonte + 1: # +1 para ter pelo menos um ponto de treino
+            logger.warning(f"Dados insuficientes para o cenário {nome_cenario}. Mínimo de {horizonte + 1} pontos necessários.")
+            return
+
+        # Dividir dados em treino e teste para avaliação
+        train_data = historical_data.iloc[:-horizonte]
+        test_data = historical_data.iloc[-horizonte:]
+
         # 2. Instanciar e executar o modelo de previsão
         model = forecast_factory(modelo_nome)
-        forecast_df = model.predict(historical_data, horizonte, **parametros)
-        logger.info(f"Previsão concluída para o cenário {nome_cenario}.")
+        
+        # Previsão no conjunto de teste para avaliação
+        forecast_test_df = model.predict(train_data, horizonte, **parametros)
+        logger.info(f"Previsão no conjunto de teste concluída para o cenário {nome_cenario}.")
+
+        # Calcular métricas de avaliação
+        metrics = calculate_metrics(test_data["valor"].reset_index(drop=True), forecast_test_df["valor_previsto"].reset_index(drop=True))
+        logger.info(f"Métricas de avaliação para {nome_cenario}: {metrics}")
+
+        # Previsão final usando todos os dados históricos para o horizonte real
+        final_forecast_df = model.predict(historical_data, horizonte, **parametros)
+        logger.info(f"Previsão final concluída para o cenário {nome_cenario}.")
 
         # 3. Processar resultados para inserção no banco de dados
-        processed_records = process_results(cenario, forecast_df)
+        # Passa as métricas para o processador de resultados
+        processed_records = process_results(cenario, final_forecast_df, metrics)
         logger.info(f"Resultados processados para o cenário {nome_cenario}. Total de {len(processed_records)} registros de previsão.")
 
         # 4. Salvar resultados no banco de dados
@@ -57,3 +78,5 @@ def run_single_scenario(
         logger.error(f"Erro inesperado ao executar o cenário {nome_cenario}: {e}", exc_info=True)
 
     logger.info(f"Execução do cenário {nome_cenario} finalizada.")
+
+
