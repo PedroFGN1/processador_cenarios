@@ -326,7 +326,7 @@ class App(customtkinter.CTk):
             
             for i, scenario in enumerate(scenarios):
                 scenario_name = scenario.get("nome_cenario", "Cenário Desconhecido")
-                self.after(0, self.status_label.configure, text=f"Executando cenário: {scenario_name} ({i+1}/{total_scenarios})")
+                self.after(0, self.status_label.configure, f"Executando cenário: {scenario_name} ({i+1}/{total_scenarios})")
                 self.after(0, self.progress_bar.set, (i + 1) / total_scenarios)
                 run_single_scenario(scenario, data_db_path, results_db_path)
 
@@ -337,8 +337,7 @@ class App(customtkinter.CTk):
             self.after(0, messagebox.showerror, "Erro na Execução", f"Ocorreu um erro: {e}")
         finally:
             self.after(0, self.enable_execute_button)
-            #self.after(0, self.status_label.configure, text="Execução finalizada.")
-            self.after(0, self.status_label.configure)
+            self.after(0, self.status_label.configure, "Execução finalizada.")
             self.after(0, self.progress_bar.set, 1.0)
 
     def enable_execute_button(self):
@@ -360,10 +359,10 @@ class App(customtkinter.CTk):
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 # Inclui as métricas de avaliação na consulta
-                results = adapter.query("SELECT nome_cenario, serie_id, data_execucao, data_previsao, valor_previsto, limite_inferior, limite_superior, modelo_utilizado, parametros_modelo, rmse, mae, mape FROM resultados_previsao ORDER BY data_execucao DESC")
+                results = adapter.query("SELECT nome_cenario, data_execucao, data_previsao, valor_previsto, limite_inferior, limite_superior, modelo_utilizado, parametros_modelo, rmse, mae, mape FROM resultados_previsao ORDER BY data_execucao DESC")
 
             if not results:
-                self.results_table.insert("", "end", values=("Nenhum resultado encontrado.", "", "", "", "", "", "", "", "", "", "", ""))
+                self.results_table.insert("", "end", values=("Nenhum resultado encontrado.", "", "", "", "", "", "", "", "", "", ""))
                 return
 
             # Define as colunas da tabela
@@ -377,7 +376,7 @@ class App(customtkinter.CTk):
 
             # Insere os dados na tabela
             for row in results:
-                self.results_table.insert("", "end", values=list(row.values()))
+                self.results_table.insert("", "end", values=list(row))
 
         except Exception as e:
             messagebox.showerror("Erro ao Carregar Resultados", f"Não foi possível carregar os resultados: {e}")
