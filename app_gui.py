@@ -14,6 +14,7 @@ from methods._run_forecasting import run_single_scenario
 from persistence.sqlite_adapter import SqliteAdapter
 from modules.chart_generator import create_forecast_chart # Importa a função de gráfico
 from modules.data_exporter import export_dataframe_to_csv, export_dataframe_to_excel # Importa as funções de exportação
+from modules.data_loader import load_historical_data # Importa para carregar dados históricos para comparação
 
 # Configura o logger
 logger = setup_logger()
@@ -224,7 +225,7 @@ class App(customtkinter.CTk):
         export_excel_button = customtkinter.CTkButton(
             buttons_frame,
             text="Exportar Excel",
-            command=self.export_results_to_excel
+            command= self.export_results_to_excel
         )
         export_excel_button.pack(side="left")
         
@@ -359,10 +360,10 @@ class App(customtkinter.CTk):
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 # Inclui as métricas de avaliação na consulta
-                results = adapter.query("SELECT nome_cenario, data_execucao, data_previsao, valor_previsto, limite_inferior, limite_superior, modelo_utilizado, parametros_modelo, rmse, mae, mape FROM resultados_previsao ORDER BY data_execucao DESC")
+                results = adapter.query("SELECT nome_cenario, serie_id, data_execucao, data_previsao, frequencia_serie, valor_previsto, limite_inferior, limite_superior, modelo_utilizado, parametros_modelo, rmse, mae, mape FROM resultados_previsao ORDER BY data_execucao DESC")
 
             if not results:
-                self.results_table.insert("", "end", values=("Nenhum resultado encontrado.", "", "", "", "", "", "", "", "", "", ""))
+                self.results_table.insert("", "end", values=("Nenhum resultado encontrado.", "", "", "", "", "", "", "", "", "", "", "", "", ""))
                 return
 
             # Define as colunas da tabela
@@ -410,15 +411,15 @@ class App(customtkinter.CTk):
 
             # Converte para DataFrame
             df = pd.DataFrame(results)
-            
-            # Exporta para CSV
-            if export_dataframe_to_csv(df, Path(file_path)):
-                messagebox.showinfo("Sucesso", f"Resultados exportados com sucesso para: {file_path}")
-            else:
-                messagebox.showerror("Erro", "Falha ao exportar os resultados para CSV.")
+            if df.empty:
+                messagebox.showwarning("Aviso", "Nenhum resultado encontrado para exportar.")
+                return
 
+            # Exporta usando a função utilitária
+            export_dataframe_to_csv(df, file_path)
+            messagebox.showinfo("Exportação Concluída", f"Resultados exportados com sucesso para:\n{file_path}")
         except Exception as e:
-            messagebox.showerror("Erro na Exportação", f"Ocorreu um erro ao exportar: {e}")
+            messagebox.showerror("Erro na Exportação", f"Erro ao exportar resultados: {e}")
             logger.error(f"Erro ao exportar resultados para CSV: {e}")
 
     def export_results_to_excel(self):
@@ -449,15 +450,15 @@ class App(customtkinter.CTk):
 
             # Converte para DataFrame
             df = pd.DataFrame(results)
-            
-            # Exporta para Excel
-            if export_dataframe_to_excel(df, Path(file_path)):
-                messagebox.showinfo("Sucesso", f"Resultados exportados com sucesso para: {file_path}")
-            else:
-                messagebox.showerror("Erro", "Falha ao exportar os resultados para Excel.")
+            if df.empty:
+                messagebox.showwarning("Aviso", "Nenhum resultado encontrado para exportar.")
+                return
 
+            # Exporta usando a função utilitária
+            export_dataframe_to_excel(df, file_path)
+            messagebox.showinfo("Exportação Concluída", f"Resultados exportados com sucesso para:\n{file_path}")
         except Exception as e:
-            messagebox.showerror("Erro na Exportação", f"Ocorreu um erro ao exportar: {e}")
+            messagebox.showerror("Erro na Exportação", f"Erro ao exportar resultados: {e}")
             logger.error(f"Erro ao exportar resultados para Excel: {e}")
 
     def on_scenario_select(self, event):
@@ -494,12 +495,14 @@ class App(customtkinter.CTk):
                     "SELECT data_previsao, valor_previsto, limite_inferior, limite_superior FROM resultados_previsao WHERE nome_cenario = ? ORDER BY data_execucao DESC, data_previsao ASC LIMIT ?",
                     (scenario_name, 100) # Limita para evitar gráficos muito grandes, ajustar conforme necessário
                 )
-            
             if not forecast_records:
                 logger.warning(f"Nenhum dado de previsão encontrado para o cenário {scenario_name} para plotagem.")
                 return
 
-            forecast_df = pd.DataFrame(forecast_records)
+            forecast_df = pd.DataFrame(forecast_records) 
+            # Seta o index para refletir os da query
+            forecast_df.columns = ["data_previsao", "valor_previsto", "limite_inferior", "limite_superior"]
+
             forecast_df["data_previsao"] = pd.to_datetime(forecast_df["data_previsao"])
             forecast_df["valor_previsto"] = pd.to_numeric(forecast_df["valor_previsto"])
             forecast_df["limite_inferior"] = pd.to_numeric(forecast_df["limite_inferior"])
@@ -510,7 +513,7 @@ class App(customtkinter.CTk):
             historical_df = load_historical_data(serie_id, data_db_path)
 
             # Cria e exibe o gráfico
-            chart_canvas = create_forecast_chart(historical_df, forecast_df, scenario_name, self.chart_frame)
+            chart_canvas = create_forecast_chart(historical_df, [forecast_df], scenario_name, self.chart_frame)
             chart_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             chart_canvas.draw()
 

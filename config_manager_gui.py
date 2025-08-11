@@ -1,13 +1,13 @@
 import customtkinter
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 import yaml
 import json
 import logging
 from pathlib import Path
 
 from modules.scenario_loader import load_scenarios
-from modules.data_loader import get_available_series # Importa a nova função
+from modules.data_loader import get_available_series, load_data_from_csv, load_data_from_excel # Importa as novas funções
 from utils.get_base_path import get_base_path
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
 
         # Frame para os botões de ação
         self.action_buttons_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-        self.action_buttons_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="e")
+        self.action_buttons_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ne")
 
         self.add_button = customtkinter.CTkButton(
             self.action_buttons_frame,
@@ -58,6 +58,24 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
             command=self.remove_scenario
         )
         self.remove_button.pack(side="left")
+
+        # Botões de importação de dados
+        #self.import_data_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        #self.import_data_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ne", columnspan=2)
+
+        self.import_csv_button = customtkinter.CTkButton(
+            self.action_buttons_frame,
+            text="Importar CSV",
+            command=self.import_csv_data
+        )
+        self.import_csv_button.pack(side="left", padx=(0, 10))
+
+        self.import_excel_button = customtkinter.CTkButton(
+            self.action_buttons_frame,
+            text="Importar Excel",
+            command=self.import_excel_data
+        )
+        self.import_excel_button.pack(side="left")
 
         # Tabela de cenários
         self.scenario_table = ttk.Treeview(self, columns=("Nome", "Série", "Modelo", "Horizonte"), show="headings")
@@ -169,6 +187,46 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
             except Exception as e:
                 messagebox.showerror("Erro ao Remover", f"Não foi possível remover o cenário: {e}")
                 logger.error(f"Erro ao remover cenário: {e}")
+
+    def import_csv_data(self):
+        """
+        Abre uma caixa de diálogo para selecionar um arquivo CSV e importa os dados.
+        """
+        file_path = filedialog.askopenfilename(
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            title="Selecionar arquivo CSV"
+        )
+        if file_path:
+            try:
+                df = load_data_from_csv(Path(file_path))
+                # Decidir o que fazer com o DataFrame carregado.
+                # Por exemplo, salvar no banco de dados de dados históricos ou processar.
+                # Por enquanto, apenas exibe uma mensagem de sucesso.
+                messagebox.showinfo("Importação CSV", f"Dados do CSV carregados com sucesso! {len(df)} registros.")
+                logger.info(f"Dados do CSV {file_path} carregados com sucesso.")
+            except Exception as e:
+                messagebox.showerror("Erro de Importação CSV", f"Não foi possível carregar o arquivo CSV: {e}")
+                logger.error(f"Erro ao importar CSV {file_path}: {e}")
+
+    def import_excel_data(self):
+        """
+        Abre uma caixa de diálogo para selecionar um arquivo Excel e importa os dados.
+        """
+        file_path = filedialog.askopenfilename(
+            filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")],
+            title="Selecionar arquivo Excel"
+        )
+        if file_path:
+            try:
+                df = load_data_from_excel(Path(file_path))
+                # Decidir o que fazer com o DataFrame carregado.
+                # Por exemplo, salvar no banco de dados de dados históricos ou processar.
+                # Por enquanto, apenas exibe uma mensagem de sucesso.
+                messagebox.showinfo("Importação Excel", f"Dados do Excel carregados com sucesso! {len(df)} registros.")
+                logger.info(f"Dados do Excel {file_path} carregados com sucesso.")
+            except Exception as e:
+                messagebox.showerror("Erro de Importação Excel", f"Não foi possível carregar o arquivo Excel: {e}")
+                logger.error(f"Erro ao importar Excel {file_path}: {e}")
 
 class ScenarioFormWindow(customtkinter.CTkToplevel):
     """
@@ -332,6 +390,3 @@ def create_config_frame(master_frame, app_instance):
     frame = ConfigManagerFrame(master_frame)
     frame.grid(row=0, column=0, sticky="nsew")
     return frame
-
-
-

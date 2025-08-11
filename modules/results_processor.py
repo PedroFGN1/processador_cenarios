@@ -6,7 +6,7 @@ import pandas as pd
 # Configura o logger para este módulo
 logger = logging.getLogger(__name__)
 
-def process_results(cenario: dict, forecast_df: pd.DataFrame, metrics: dict = None) -> list:
+def process_results(cenario: dict, forecast_df: pd.DataFrame, metrics: dict = None, frequency: str = None) -> list:
     """
     Processa os resultados de uma previsão, adicionando metadados do cenário,
     métricas de avaliação e preparando os dados para inserção no banco de dados.
@@ -16,6 +16,8 @@ def process_results(cenario: dict, forecast_df: pd.DataFrame, metrics: dict = No
         forecast_df (pd.DataFrame): DataFrame com os resultados da previsão
         metrics (dict, optional): Dicionário com métricas de avaliação (RMSE, MAE, MAPE).
                                   Padrão para None.
+        frequency (str, optional): Frequência inferida da série temporal (ex: 'D', 'M', 'A').
+                                   Padrão para None.
     
     Returns:
         list: Lista de dicionários prontos para inserção no banco de dados
@@ -35,8 +37,10 @@ def process_results(cenario: dict, forecast_df: pd.DataFrame, metrics: dict = No
     for _, row in forecast_df.iterrows():
         record = {
             "nome_cenario": cenario["nome_cenario"],
+            "serie_id": cenario.get("serie_id", "Série Desconhecida"), # Usa se não houver série específica
             "data_execucao": data_execucao.isoformat(),
             "data_previsao": row["data_previsao"].strftime("%Y-%m-%d"),
+            "frequencia_serie": frequency, # Adiciona a frequência da série
             "valor_previsto": float(row["valor_previsto"]),
             "limite_inferior": float(row["limite_inferior"]) if pd.notna(row["limite_inferior"]) else None,
             "limite_superior": float(row["limite_superior"]) if pd.notna(row["limite_superior"]) else None,

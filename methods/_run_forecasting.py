@@ -3,10 +3,10 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
-from modules.data_loader import load_historical_data
+from modules.data_loader import load_historical_data, infer_frequency # Importa infer_frequency
 from modules.forecasting_model import forecast_factory
 from modules.results_processor import process_results
-from modules.model_evaluator import calculate_metrics # Importa a função de cálculo de métricas
+from modules.model_evaluator import calculate_metrics
 from persistence.sqlite_adapter import SqliteAdapter
 
 # Configura o logger para este módulo
@@ -42,6 +42,10 @@ def run_single_scenario(
             logger.warning(f"Dados insuficientes para o cenário {nome_cenario}. Mínimo de {horizonte + 1} pontos necessários.")
             return
 
+        # Inferir frequência da série temporal
+        frequency = infer_frequency(historical_data)
+        logger.info(f"Frequência inferida para a série {serie_id}: {frequency}")
+
         # Dividir dados em treino e teste para avaliação
         train_data = historical_data.iloc[:-horizonte]
         test_data = historical_data.iloc[-horizonte:]
@@ -62,8 +66,8 @@ def run_single_scenario(
         logger.info(f"Previsão final concluída para o cenário {nome_cenario}.")
 
         # 3. Processar resultados para inserção no banco de dados
-        # Passa as métricas para o processador de resultados
-        processed_records = process_results(cenario, final_forecast_df, metrics)
+        # Passa as métricas e a frequência para o processador de resultados
+        processed_records = process_results(cenario, final_forecast_df, metrics, frequency) # Passa a frequência
         logger.info(f"Resultados processados para o cenário {nome_cenario}. Total de {len(processed_records)} registros de previsão.")
 
         # 4. Salvar resultados no banco de dados

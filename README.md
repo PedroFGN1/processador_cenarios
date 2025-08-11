@@ -16,7 +16,8 @@ processador_cenarios/
 ├── create_dummy_db.py               # Script para gerar dados de exemplo para dados_bcb.db
 ├── methods/                         # Módulos de orquestração de execução
 │   └── _run_forecasting.py          # Orquestrador de um único cenário
-├── modules/                         # Módulos de lógica de negócio (carregamento, modelos, processamento)
+├── modules/                         # Módulos de lógica de negócio (carregamento, modelos, processamento, gráfico)
+│   ├── chart_generator.py
 │   ├── data_loader.py
 │   ├── data_exporter.py
 │   ├── forecasting_model.py

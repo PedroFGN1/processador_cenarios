@@ -16,6 +16,8 @@ def export_dataframe_to_csv(df: pd.DataFrame, file_path: Path) -> bool:
         bool: True se a exportação for bem-sucedida, False caso contrário.
     """
     try:
+        if 'id' in df.columns:
+            df = df.drop(columns=['id'])  # Remove a coluna 'id' se existir
         df.to_csv(file_path, index=False, encoding="utf-8")
         logger.info(f"DataFrame exportado com sucesso para CSV: {file_path}")
         return True
@@ -35,6 +37,8 @@ def export_dataframe_to_excel(df: pd.DataFrame, file_path: Path) -> bool:
         bool: True se a exportação for bem-sucedida, False caso contrário.
     """
     try:
+        if 'id' in df.columns:
+            df = df.drop(columns=['id'])  # Remove a coluna 'id' se existir
         df.to_excel(file_path, index=False, engine="openpyxl")
         logger.info(f"DataFrame exportado com sucesso para Excel: {file_path}")
         return True

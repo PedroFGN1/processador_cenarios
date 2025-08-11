@@ -30,6 +30,12 @@ A aplicação oferece as seguintes funcionalidades através de sua interface gr�
 
 ### 3.1. Gerenciamento de Cenários
 
+*   **Criação e Edição:** Permite adicionar novos cenários de previsão e editar os existentes através de uma interface gráfica.
+*   **Remoção:** Possibilita a exclusão de cenários configurados.
+*   **Seleção de Séries:** Permite associar cenários a diferentes séries temporais disponíveis no banco de dados.
+*   **Configuração de Modelos:** Suporte para diferentes modelos de previsão (ARIMA, Prophet, RandomForest) com configuração de parâmetros.
+*   **Importação de Dados:** Capacidade de importar dados históricos de séries temporais a partir de arquivos CSV e Excel, servindo como base para futuras integrações de dados.
+
 Permite ao usuário definir e armazenar diferentes cenários de previsão. Cada cenário inclui:
 -   Nome do cenário
 -   ID da série temporal a ser prevista
@@ -44,9 +50,23 @@ Os cenários são salvos no arquivo `scenarios_config.yaml`.
 
 O usuário pode iniciar a execução de todos os cenários configurados. A execução ocorre em uma thread separada para não bloquear a GUI, e os logs de progresso são exibidos em tempo real na interface. Após a execução, os resultados são salvos em um banco de dados SQLite (`previsoes.db`).
 
+*   **Execução em Lote:** Permite executar previsões para todos os cenários configurados de uma só vez.
+*   **Feedback de Progresso:** Exibe uma barra de progresso e mensagens de status durante a execução.
+*   **Registro de Logs:** Detalhes da execução são registrados em tempo real em uma área de logs na interface.
+
 ### 3.3. Visualização de Resultados
 
-Permite a consulta e exibição dos resultados das previsões salvas no banco de dados em formato tabular. O usuário pode atualizar a tabela para ver os resultados mais recentes.
+*   **Tabela de Resultados:** Exibe os resultados de todas as previsões realizadas em uma tabela organizada.
+*   **Gráficos Interativos:** Permite visualizar graficamente os dados históricos e as previsões para cenários selecionados.
+*   **Seleção Múltipla:** Suporte para selecionar múltiplos cenários na tabela e visualizá-los simultaneamente no gráfico para comparação.
+*   **Comparação de Cenários:** Facilita a análise comparativa entre diferentes modelos ou configurações de cenários através da sobreposição de gráficos.
+*   **Métricas de Avaliação:** Exibe métricas de desempenho do modelo (RMSE, MAE, MAPE) para cada previsão, permitindo uma análise quantitativa.
+*   **Frequência da Série:** A frequência inferida da série temporal é armazenada e exibida, auxiliando na compreensão dos dados.
+
+### 3.4. Exportação de Resultados
+
+*   **Exportação para CSV:** Permite exportar todos os resultados da previsão para um arquivo CSV.
+*   **Exportação para Excel:** Permite exportar todos os resultados da previsão para um arquivo Excel.
 
 ## 4. Arquitetura e Fluxo de Dados
 

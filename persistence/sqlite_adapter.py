@@ -29,14 +29,16 @@ class SqliteAdapter(BaseAdapter):
     def create_schema_if_not_exists(self):
         """
         Cria a tabela de resultados de previsão se ela não existir.
-        Adiciona colunas para métricas de avaliação se não existirem.
+        Adiciona colunas para métricas de avaliação e frequência da série se não existirem.
         """
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS resultados_previsao (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome_cenario TEXT NOT NULL,
+            serie_id TEXT NOT NULL,
             data_execucao TIMESTAMP NOT NULL,
             data_previsao DATE NOT NULL,
+            frequencia_serie TEXT,
             valor_previsto REAL NOT NULL,
             limite_inferior REAL,
             limite_superior REAL,
@@ -56,6 +58,7 @@ class SqliteAdapter(BaseAdapter):
             self._add_column_if_not_exists(cursor, "resultados_previsao", "rmse", "REAL")
             self._add_column_if_not_exists(cursor, "resultados_previsao", "mae", "REAL")
             self._add_column_if_not_exists(cursor, "resultados_previsao", "mape", "REAL")
+            self._add_column_if_not_exists(cursor, "resultados_previsao", "frequencia_serie", "TEXT")
 
             self.connection.commit()
             logging.info("Esquema do banco de dados verificado/criado com sucesso.")
@@ -128,3 +131,6 @@ class SqliteAdapter(BaseAdapter):
         except Exception as e:
             logging.error(f"Erro ao executar consulta SQL: {e}")
             raise
+
+
+
