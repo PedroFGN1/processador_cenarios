@@ -14,6 +14,10 @@ class SqliteAdapter(BaseAdapter):
         try:
             self.connection = sqlite3.connect(self.db_path)
             self.connection.row_factory = sqlite3.Row  # Permite acesso por nome de coluna
+            if not self.connection:
+                raise Exception(f"Não foi possível conectar ao banco de dados {self.db_path}.")
+                # Criar banco de dados se não existir
+                
             return self
         except Exception as e:
             logging.error(f"Erro ao conectar com o banco de dados {self.db_path}: {e}")
