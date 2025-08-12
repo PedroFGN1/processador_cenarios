@@ -1,36 +1,27 @@
 cenarios:
-- nome_cenario: previsao_ipca_arima
-  serie_id: IPCA
-  modelo: ARIMA
-  parametros:
-    p: 5
-    d: 1
-    q: 0
-  horizonte_previsao: 12
-  intervalo_confianca: 0.95
-- nome_cenario: previsao_selic_prophet
-  serie_id: SELIC
-  modelo: Prophet
-  parametros:
-    growth: linear
-    seasonality_mode: multiplicative
+- nome_cenario: PrevisaoTR
+  serie_id: tr_mensal
+  modelo: RandomForest
   horizonte_previsao: 24
-  intervalo_confianca: 0.9
-- nome_cenario: previsao_vendas_rf
-  serie_id: VENDAS_MENSAIS
-  modelo: RandomForest
+  intervalo_confianca: 1.0
   parametros:
     n_estimators: 100
-    max_depth: 10
+    max_depth: 5
     random_state: 42
-  horizonte_previsao: 6
-  intervalo_confianca: 0.95
-- nome_cenario: PLOA
-  serie_id: SELIC
-  modelo: RandomForest
-  horizonte_previsao: 1
+- nome_cenario: PrevisaoTR-2
+  serie_id: tr_mensal
+  modelo: ARIMA
+  horizonte_previsao: 48
+  intervalo_confianca: 1.0
+  parametros:
+    p: 3
+    d: 1
+    q: 1
+- nome_cenario: Ptax-Dolar
+  serie_id: dolar_mensal
+  modelo: Prophet
+  horizonte_previsao: 24
   intervalo_confianca: 0.5
-  parametros:
-    n_estimators: 100
-    max_depth: 10
-    random_state: 42
+  parametros: 
+    growth: 'linear'
+    seasonality_mode: 'multiplicative'

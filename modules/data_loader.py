@@ -26,7 +26,7 @@ def load_historical_data(serie_id: str, db_path: Path) -> pd.DataFrame:
     # SQL para buscar os dados da série
     sql = """
     SELECT data, valor 
-    FROM dados_bcb 
+    FROM series_consolidada 
     WHERE serie_id = ? 
     ORDER BY data
     """
@@ -60,6 +60,68 @@ def load_historical_data(serie_id: str, db_path: Path) -> pd.DataFrame:
         logger.error(f"Erro ao carregar dados para a série {serie_id}: {e}")
         raise
 
+def get_series_tables(db_path):
+    """
+    Retorna lista de tabelas que possuem exatamente as colunas ['data', 'valor'].
+    """
+    series_tables = []
+    with SqliteAdapter(str(db_path)) as adapter:
+        all_tables = [row[0] for row in adapter.query(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )]
+
+        for table in all_tables:
+            # Sanitiza nome da tabela
+            safe_table = ''.join(c for c in table if c.isalnum() or c == '_')
+            cols_info = adapter.query(f"PRAGMA table_info({safe_table})")
+            if not cols_info:
+                continue
+
+            cols = [col[1] for col in cols_info]
+            if sorted(cols) == ['data', 'valor']:
+                series_tables.append(safe_table)
+
+    logger.info(f"Tabelas de séries encontradas: {series_tables}")
+    if not series_tables:
+        logger.warning("Nenhuma tabela de série encontrada no banco de dados.")
+    return series_tables
+
+
+def consolidate_series(db_path: Path):
+    """
+    Consolida todas as tabelas de séries em uma única tabela 'series_consolidada'.
+    """
+    logger.info("Consolidando tabelas de séries em uma tabela única...")
+
+    series_tables = get_series_tables(db_path)
+    if not series_tables:
+        logger.warning("Nenhuma tabela de série encontrada para consolidação.")
+        return
+
+    with SqliteAdapter(str(db_path)) as adapter:
+        # Cria tabela consolidada se não existir
+        adapter.execute("""
+            CREATE TABLE IF NOT EXISTS series_consolidada (
+                serie_id TEXT,
+                data TEXT,
+                valor REAL
+            )
+        """)
+
+        # Limpa dados antigos
+        adapter.execute("DELETE FROM series_consolidada")
+
+        # Copia dados das tabelas
+        for table in series_tables:
+            adapter.execute(f"""
+                INSERT INTO series_consolidada (serie_id, data, valor)
+                SELECT '{table}', data, valor
+                FROM {table}
+            """)
+
+    logger.info(f"{len(series_tables)} tabelas consolidadas na tabela 'series_consolidada'.")
+    logger.info("Consolidação concluída.")
+
 def get_available_series(db_path: Path) -> list:
     """
     Retorna uma lista de todos os IDs de série únicos disponíveis no banco de dados.
@@ -71,7 +133,7 @@ def get_available_series(db_path: Path) -> list:
         list: Uma lista de strings com os IDs das séries disponíveis.
     """
     logger.info(f"Buscando séries disponíveis em: {db_path}")
-    sql = "SELECT DISTINCT serie_id FROM dados_bcb ORDER BY serie_id"
+    sql = "SELECT DISTINCT serie_id FROM series_consolidada ORDER BY serie_id"
     try:
         with SqliteAdapter(str(db_path)) as adapter:
             results = adapter.query(sql)

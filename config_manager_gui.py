@@ -19,67 +19,60 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         self.base_path = get_base_path()
         self.config_file_path = self.base_path / "scenarios_config.yaml"
         self.data_db_path = self.base_path / "dados_bcb.db" # Caminho para o DB de dados históricos
         self.scenarios = []
 
-        # Título
+        # Este frame irá conter o título e os botões de ação
+        self.header_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        self.header_frame.grid(row=0, column=0, columnspan=2, padx=20, pady=(20, 10), sticky="ew")
+        self.header_frame.grid_columnconfigure(0, weight=1) # Coluna do título (expansível)
+        self.header_frame.grid_columnconfigure(1, weight=0) # Coluna dos botões (não expansível)
+
+        # Título (agora dentro do header_frame)
         self.title_label = customtkinter.CTkLabel(
-            self,
-            text="Gerenciamento de Cenários",
+            self.header_frame, # Mestre alterado para header_frame
+            text="Cenários",
             font=customtkinter.CTkFont(size=20, weight="bold")
         )
-        self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="w")
+        self.title_label.grid(row=0, column=0, sticky="w")
 
-        # Frame para os botões de ação
-        self.action_buttons_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-        self.action_buttons_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ne")
+        # Frame para os botões de ação (agora dentro do header_frame)
+        self.action_buttons_frame = customtkinter.CTkFrame(self.header_frame, fg_color="transparent")
+        self.action_buttons_frame.grid(row=0, column=1, sticky="e")
 
+        # Botões (nenhuma alteração aqui, eles usam .pack dentro do seu frame)
         self.add_button = customtkinter.CTkButton(
-            self.action_buttons_frame,
-            text="Adicionar Novo",
-            command=self.add_scenario
+            self.action_buttons_frame, text="Adicionar Novo", command=self.add_scenario
         )
         self.add_button.pack(side="left", padx=(0, 10))
 
         self.edit_button = customtkinter.CTkButton(
-            self.action_buttons_frame,
-            text="Editar Selecionado",
-            command=self.edit_scenario
+            self.action_buttons_frame, text="Editar Selecionado", command=self.edit_scenario
         )
         self.edit_button.pack(side="left", padx=(0, 10))
 
         self.remove_button = customtkinter.CTkButton(
-            self.action_buttons_frame,
-            text="Remover Selecionado",
-            command=self.remove_scenario
+            self.action_buttons_frame, text="Remover Selecionado", command=self.remove_scenario
         )
-        self.remove_button.pack(side="left")
-
-        # Botões de importação de dados
-        #self.import_data_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-        #self.import_data_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ne", columnspan=2)
+        self.remove_button.pack(side="left", padx=(0, 10))
 
         self.import_csv_button = customtkinter.CTkButton(
-            self.action_buttons_frame,
-            text="Importar CSV",
-            command=self.import_csv_data
+            self.action_buttons_frame, text="Importar CSV", command=self.import_csv_data
         )
         self.import_csv_button.pack(side="left", padx=(0, 10))
 
         self.import_excel_button = customtkinter.CTkButton(
-            self.action_buttons_frame,
-            text="Importar Excel",
-            command=self.import_excel_data
+            self.action_buttons_frame, text="Importar Excel", command=self.import_excel_data
         )
         self.import_excel_button.pack(side="left")
 
         # Tabela de cenários
         self.scenario_table = ttk.Treeview(self, columns=("Nome", "Série", "Modelo", "Horizonte"), show="headings")
-        self.scenario_table.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
+        self.scenario_table.grid(row=2, column=0, sticky="nsew", padx=20, pady=(10, 0))
 
         self.scenario_table.heading("Nome", text="Nome do Cenário")
         self.scenario_table.heading("Série", text="ID da Série")
@@ -93,11 +86,11 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
 
         # Scrollbars para a tabela
         vsb = ttk.Scrollbar(self, orient="vertical", command=self.scenario_table.yview)
-        vsb.grid(row=1, column=1, sticky="ns")
+        vsb.grid(row=2, column=1, sticky="ns")
         self.scenario_table.configure(yscrollcommand=vsb.set)
 
         hsb = ttk.Scrollbar(self, orient="horizontal", command=self.scenario_table.xview)
-        hsb.grid(row=2, column=0, sticky="ew")
+        hsb.grid(row=3, column=0, sticky="ew")
         self.scenario_table.configure(xscrollcommand=hsb.set)
 
         self.load_and_display_scenarios()

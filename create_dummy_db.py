@@ -7,9 +7,9 @@ def create_dummy_data_db(db_path: Path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    cursor.execute("DROP TABLE IF EXISTS dados_bcb")
+    cursor.execute("DROP TABLE IF EXISTS series_consolidada")
     cursor.execute("""
-        CREATE TABLE dados_bcb (
+        CREATE TABLE series_consolidada (
             serie_id TEXT NOT NULL,
             data TEXT NOT NULL,
             valor REAL NOT NULL,
@@ -41,9 +41,9 @@ def create_dummy_data_db(db_path: Path):
         value = 100.0 + (i * 0.5) + (i % 7) * 2.0 + (i % 3) * -1.0 # Crescimento com ruído e sazonalidade
         vendas_data.append(("VENDAS_MENSAIS", date.strftime("%Y-%m-%d"), round(value, 2)))
 
-    cursor.executemany("INSERT INTO dados_bcb (serie_id, data, valor) VALUES (?, ?, ?)", ipca_data)
-    cursor.executemany("INSERT INTO dados_bcb (serie_id, data, valor) VALUES (?, ?, ?)", selic_data)
-    cursor.executemany("INSERT INTO dados_bcb (serie_id, data, valor) VALUES (?, ?, ?)", vendas_data)
+    cursor.executemany("INSERT INTO series_consolidada (serie_id, data, valor) VALUES (?, ?, ?)", ipca_data)
+    cursor.executemany("INSERT INTO series_consolidada (serie_id, data, valor) VALUES (?, ?, ?)", selic_data)
+    cursor.executemany("INSERT INTO series_consolidada (serie_id, data, valor) VALUES (?, ?, ?)", vendas_data)
 
     conn.commit()
     conn.close()

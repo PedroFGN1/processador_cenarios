@@ -132,5 +132,19 @@ class SqliteAdapter(BaseAdapter):
             logging.error(f"Erro ao executar consulta SQL: {e}")
             raise
 
-
+    def execute(self, sql, params=None):
+        """
+        Executa comandos de escrita (INSERT, UPDATE, DELETE).
+        Faz commit automático.
+        """
+        try:
+            cursor = self.connection.cursor()
+            if params:
+                cursor.execute(sql, params)
+            else:
+                cursor.execute(sql)
+            self.connection.commit()
+        except Exception as e:
+            logging.error(f"Erro ao executar comando de escrita: {e}")
+            raise
 
