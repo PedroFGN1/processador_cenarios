@@ -7,14 +7,14 @@ import threading
 import pandas as pd
 
 from utils.logger_config import setup_logger, GuiLogHandler
-from utils.get_base_path import get_base_path
+from utils.get_base_path import get_database_path, get_config_path
 from config_manager_gui import ConfigManagerFrame
 from modules.scenario_loader import load_scenarios
 from methods._run_forecasting import run_single_scenario
 from persistence.sqlite_adapter import SqliteAdapter
 from modules.chart_generator import create_forecast_chart # Importa a função de gráfico
 from modules.data_exporter import export_dataframe_to_csv, export_dataframe_to_excel # Importa as funções de exportação
-from modules.data_loader import load_historical_data # Importa para carregar dados históricos para comparação
+from modules.data_loader import load_historical_data, consolidate_series # Importa para carregar dados históricos para comparação
 
 # Configura o logger
 logger = setup_logger()
@@ -111,7 +111,15 @@ class App(customtkinter.CTk):
         self.log_handler = GuiLogHandler(self.frames["execute"].log_textbox)
         logger.addHandler(self.log_handler)
 
+        # Inicializa o banco de dados de resultados
         self.initialize_results_database()
+
+        # Atualiza a lista de séries disponíveis
+        status = consolidate_series(get_database_path("dados_bcb.db"))
+        if not status[0]:
+            logger.warning(status[1])
+        else:
+            logger.info(status[1])
     
     def initialize_results_database(self):
         """
@@ -119,7 +127,7 @@ class App(customtkinter.CTk):
         Garante que a aplicação pode funcionar mesmo sem execuções prévias.
         """
         try:
-            result_path = get_base_path("previsoes.db")
+            result_path = get_database_path("previsoes.db")
             
             with SqliteAdapter(str(result_path)) as adapter:
                 adapter.create_schema_if_not_exists()
@@ -332,9 +340,9 @@ class App(customtkinter.CTk):
         """
         Lógica de execução de todos os cenários.
         """
-        config_path = get_base_path("scenarios_config.yaml")
-        data_db_path = get_base_path("dados_bcb.db") # Assumindo que o banco de dados está na raiz
-        results_db_path = get_base_path("previsoes.db")
+        config_path = get_config_path("scenarios_config.yaml")
+        data_db_path = get_database_path("dados_bcb.db") # Assumindo que o banco de dados está na raiz
+        results_db_path = get_database_path("previsoes.db")
 
         try:
             scenarios = load_scenarios(config_path)
@@ -371,7 +379,7 @@ class App(customtkinter.CTk):
             self.results_table.delete(item)
 
         try:
-            results_db_path = get_base_path("previsoes.db")
+            results_db_path = get_database_path("previsoes.db")
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 # Inclui as métricas de avaliação na consulta
@@ -414,7 +422,7 @@ class App(customtkinter.CTk):
                 return  # Usuário cancelou
 
             # Carrega os dados do banco de dados
-            results_db_path = get_base_path("previsoes.db")
+            results_db_path = get_database_path("previsoes.db")
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 results = adapter.query("SELECT * FROM resultados_previsao ORDER BY data_execucao DESC")
@@ -452,7 +460,7 @@ class App(customtkinter.CTk):
                 return  # Usuário cancelou
 
             # Carrega os dados do banco de dados
-            results_db_path = get_base_path("previsoes.db")
+            results_db_path = get_database_path("previsoes.db")
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 results = adapter.query("SELECT * FROM resultados_previsao ORDER BY data_execucao DESC")
@@ -496,8 +504,8 @@ class App(customtkinter.CTk):
 
         # Reconstruir o DataFrame de previsão a partir dos valores da tabela
         # É mais robusto carregar os dados do DB novamente para garantir tipos corretos
-        results_db_path = get_base_path("previsoes.db")
-        data_db_path = get_base_path("dados_bcb.db")
+        results_db_path = get_database_path("previsoes.db")
+        data_db_path = get_database_path("dados_bcb.db")
 
         try:
             with SqliteAdapter(str(results_db_path)) as adapter:
@@ -521,13 +529,10 @@ class App(customtkinter.CTk):
             forecast_df["limite_superior"] = pd.to_numeric(forecast_df["limite_superior"])
 
             # Carregar dados históricos correspondentes
-            from modules.data_loader import load_historical_data
             historical_df = load_historical_data(serie_id, data_db_path)
 
             # Cria e exibe o gráfico
-            chart_canvas = create_forecast_chart(historical_df, [forecast_df], scenario_name, self.chart_frame)
-            chart_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-            chart_canvas.draw()
+            create_forecast_chart(historical_df, [forecast_df], scenario_name, self.chart_frame)
 
         except Exception as e:
             logger.error(f"Erro ao gerar gráfico para o cenário {scenario_name}: {e}", exc_info=True)

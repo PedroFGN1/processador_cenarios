@@ -6,7 +6,7 @@ from persistence.sqlite_adapter import SqliteAdapter
 # Configura o logger para este módulo
 logger = logging.getLogger(__name__)
 
-def load_historical_data(serie_id: str, db_path: Path) -> pd.DataFrame:
+def load_historical_data(serie_id: str, db_path) -> pd.DataFrame:
     """
     Carrega dados históricos de uma série temporal do banco de dados.
 
@@ -87,16 +87,16 @@ def get_series_tables(db_path):
     return series_tables
 
 
-def consolidate_series(db_path: Path):
+def consolidate_series(db_path):
     """
     Consolida todas as tabelas de séries em uma única tabela 'series_consolidada'.
     """
-    logger.info("Consolidando tabelas de séries em uma tabela única...")
+    print("Consolidando tabelas de séries em uma tabela única...")
 
     series_tables = get_series_tables(db_path)
     if not series_tables:
         logger.warning("Nenhuma tabela de série encontrada para consolidação.")
-        return
+        return False, "Nenhuma tabela de série encontrada para consolidação."
 
     with SqliteAdapter(str(db_path)) as adapter:
         # Cria tabela consolidada se não existir
@@ -119,15 +119,16 @@ def consolidate_series(db_path: Path):
                 FROM {table}
             """)
 
-    logger.info(f"{len(series_tables)} tabelas consolidadas na tabela 'series_consolidada'.")
-    logger.info("Consolidação concluída.")
+        print(f"{len(series_tables)} tabelas consolidadas na tabela 'series_consolidada'.")
+        print("Consolidação concluída.")
+        return True, "Consolidação concluída com sucesso."
 
-def get_available_series(db_path: Path) -> list:
+def get_available_series(db_path) -> list:
     """
     Retorna uma lista de todos os IDs de série únicos disponíveis no banco de dados.
 
     Args:
-        db_path (Path): Caminho para o banco de dados SQLite.
+        db_path: Caminho para o banco de dados SQLite.
 
     Returns:
         list: Uma lista de strings com os IDs das séries disponíveis.
@@ -181,7 +182,7 @@ def infer_frequency(df: pd.DataFrame) -> str:
         logger.warning(f"Frequência inferida {freq} não reconhecida. Retornando como está.")
         return freq
 
-def load_data_from_csv(file_path: Path) -> pd.DataFrame:
+def load_data_from_csv(file_path) -> pd.DataFrame:
     """
     Carrega dados de um arquivo CSV.
 
@@ -208,7 +209,7 @@ def load_data_from_csv(file_path: Path) -> pd.DataFrame:
         logger.error(f"Erro ao carregar dados do CSV {file_path}: {e}")
         raise
 
-def load_data_from_excel(file_path: Path, sheet_name: str = None) -> pd.DataFrame:
+def load_data_from_excel(file_path, sheet_name: str = None) -> pd.DataFrame:
     """
     Carrega dados de um arquivo Excel.
 

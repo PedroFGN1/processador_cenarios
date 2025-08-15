@@ -7,8 +7,11 @@ import logging
 from pathlib import Path
 
 from modules.scenario_loader import load_scenarios
-from modules.data_loader import get_available_series, load_data_from_csv, load_data_from_excel # Importa as novas funções
-from utils.get_base_path import get_base_path
+from modules.data_loader import consolidate_series, get_available_series, load_data_from_csv, load_data_from_excel
+from utils.get_base_path import get_config_path, get_database_path
+from utils.logger_config import setup_logger
+
+logger = setup_logger
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +24,8 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        self.config_file_path = get_base_path("scenarios_config.yaml")
-        self.data_db_path = get_base_path("dados_bcb.db") # Caminho para o DB de dados históricos
+        self.config_file_path = get_config_path("scenarios_config.yaml")
+        self.data_db_path = get_database_path("dados_bcb.db") # Caminho para o DB de dados históricos
         self.scenarios = []
 
         # Este frame irá conter o título e os botões de ação
@@ -255,18 +258,29 @@ class ScenarioFormWindow(customtkinter.CTkToplevel):
         self.name_entry.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
         row += 1
 
-        # ID da Série (agora um CTkComboBox)
+        # ID da Série (agora com botão de refresh)
         customtkinter.CTkLabel(self, text="ID da Série:").grid(row=row, column=0, padx=10, pady=5, sticky="w")
         
+        # ALTERADO: Criamos um Frame para agrupar o OptionMenu e o botão
+        self.serie_id_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        self.serie_id_frame.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
+        self.serie_id_frame.grid_columnconfigure(0, weight=1) # Coluna do OptionMenu expande
+        self.serie_id_frame.grid_columnconfigure(1, weight=0) # Coluna do Botão não expande
+
         # Carrega as séries disponíveis
         available_series = get_available_series(self.data_db_path)
         if not available_series:
-            available_series = ["Nenhuma série disponível"] # Opção padrão se não houver séries
-            messagebox.showwarning("Aviso", "Nenhuma série histórica encontrada no banco de dados. Por favor, crie o banco de dados de exemplo ou importe dados.")
+            available_series = ["Nenhuma série disponível"]
+            messagebox.showwarning("Aviso", "Nenhuma série histórica encontrada...")
 
-        self.serie_id_menu = customtkinter.CTkOptionMenu(self, values=available_series)
-        self.serie_id_menu.grid(row=row, column=1, padx=10, pady=5, sticky="ew")
-        self.serie_id_menu.set(available_series[0]) # Define o primeiro como padrão
+        # ALTERADO: O OptionMenu agora é filho do 'serie_id_frame'
+        self.serie_id_menu = customtkinter.CTkOptionMenu(self.serie_id_frame, values=available_series)
+        self.serie_id_menu.grid(row=0, column=0, padx=(0, 5), sticky="ew") # Posicionado dentro do frame
+        self.serie_id_menu.set(available_series[0])
+        
+        # NOVO: Botão de Refresh
+        self.refresh_button = customtkinter.CTkButton(self.serie_id_frame, text="Refresh", width=35, command=self._refresh_series_list)
+        self.refresh_button.grid(row=0, column=1, sticky="w") # Posicionado dentro do frame
         row += 1
 
         # Modelo
@@ -301,6 +315,30 @@ class ScenarioFormWindow(customtkinter.CTkToplevel):
 
         self.cancel_button = customtkinter.CTkButton(self, text="Cancelar", command=self.destroy)
         self.cancel_button.grid(row=row, column=1, padx=10, pady=20, sticky="ew")
+
+    def _refresh_series_list(self):
+        """
+        Executa a atualização do banco e recarrega as opções no OptionMenu.
+        """
+        logger.info("Iniciando atualização da lista de séries...")
+        messagebox.showinfo("Atualização", "Recarregando a lista...")
+
+        # função que atualiza a tabela do banco de dados.
+        status = consolidate_series(self.data_db_path)
+        if status[0] == False:
+            messagebox.showerror("Erro de Atualização", status[1])
+
+        # Recarrega as séries disponíveis do banco
+        available_series = get_available_series(self.data_db_path)
+        if not available_series:
+            available_series = ["Nenhuma série disponível"]
+        
+        # Atualiza os valores do OptionMenu
+        self.serie_id_menu.configure(values=available_series)
+        self.serie_id_menu.set(available_series[0])
+
+        if status[0] == True:
+            messagebox.showinfo("Sucesso", status[1])
 
     def fill_form_with_data(self):
         """
