@@ -110,7 +110,24 @@ class App(customtkinter.CTk):
         # Configura o handler de log para a caixa de texto de execução
         self.log_handler = GuiLogHandler(self.frames["execute"].log_textbox)
         logger.addHandler(self.log_handler)
+
+        self.initialize_results_database()
     
+    def initialize_results_database(self):
+        """
+        Inicializa o banco de dados de resultados se não existir.
+        Garante que a aplicação pode funcionar mesmo sem execuções prévias.
+        """
+        try:
+            result_path = get_base_path("previsoes.db")
+            
+            with SqliteAdapter(str(result_path)) as adapter:
+                adapter.create_schema_if_not_exists()
+                
+            logger.info("Banco de dados de resultados inicializado com sucesso.")
+        except Exception as e:
+            logger.error(f"Erro ao inicializar banco de resultados: {e}")
+
     def create_frames(self):
         """
         Cria os frames para cada tela da aplicação.
@@ -315,10 +332,9 @@ class App(customtkinter.CTk):
         """
         Lógica de execução de todos os cenários.
         """
-        base_path = get_base_path()
-        config_path = base_path / "scenarios_config.yaml"
-        data_db_path = base_path / "dados_bcb.db" # Assumindo que o banco de dados está na raiz
-        results_db_path = base_path / "previsoes.db"
+        config_path = get_base_path("scenarios_config.yaml")
+        data_db_path = get_base_path("dados_bcb.db") # Assumindo que o banco de dados está na raiz
+        results_db_path = get_base_path("previsoes.db")
 
         try:
             scenarios = load_scenarios(config_path)
@@ -355,8 +371,7 @@ class App(customtkinter.CTk):
             self.results_table.delete(item)
 
         try:
-            base_path = get_base_path()
-            results_db_path = base_path / "previsoes.db"
+            results_db_path = get_base_path("previsoes.db")
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 # Inclui as métricas de avaliação na consulta
@@ -399,8 +414,7 @@ class App(customtkinter.CTk):
                 return  # Usuário cancelou
 
             # Carrega os dados do banco de dados
-            base_path = get_base_path()
-            results_db_path = base_path / "previsoes.db"
+            results_db_path = get_base_path("previsoes.db")
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 results = adapter.query("SELECT * FROM resultados_previsao ORDER BY data_execucao DESC")
@@ -438,8 +452,7 @@ class App(customtkinter.CTk):
                 return  # Usuário cancelou
 
             # Carrega os dados do banco de dados
-            base_path = get_base_path()
-            results_db_path = base_path / "previsoes.db"
+            results_db_path = get_base_path("previsoes.db")
             
             with SqliteAdapter(str(results_db_path)) as adapter:
                 results = adapter.query("SELECT * FROM resultados_previsao ORDER BY data_execucao DESC")
@@ -483,9 +496,8 @@ class App(customtkinter.CTk):
 
         # Reconstruir o DataFrame de previsão a partir dos valores da tabela
         # É mais robusto carregar os dados do DB novamente para garantir tipos corretos
-        base_path = get_base_path()
-        results_db_path = base_path / "previsoes.db"
-        data_db_path = base_path / "dados_bcb.db"
+        results_db_path = get_base_path("previsoes.db")
+        data_db_path = get_base_path("dados_bcb.db")
 
         try:
             with SqliteAdapter(str(results_db_path)) as adapter:

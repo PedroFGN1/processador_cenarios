@@ -5,7 +5,7 @@ from pathlib import Path
 # Configura o logger para este módulo
 logger = logging.getLogger(__name__)
 
-def load_scenarios(config_path: Path) -> list:
+def load_scenarios(config_path) -> list:
     """
     Carrega os cenários de previsão de um arquivo YAML.
 
@@ -19,7 +19,7 @@ def load_scenarios(config_path: Path) -> list:
         FileNotFoundError: Se o arquivo de configuração não for encontrado.
         ValueError: Se o arquivo YAML estiver malformado ou não contiver a chave 'cenarios'.
     """
-    if not config_path.exists():
+    if not config_path:
         logger.error(f"Arquivo de configuração não encontrado: {config_path}")
         raise FileNotFoundError(f"Arquivo de configuração não encontrado: {config_path}")
 

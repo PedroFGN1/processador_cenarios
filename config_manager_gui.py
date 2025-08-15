@@ -21,9 +21,8 @@ class ConfigManagerFrame(customtkinter.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        self.base_path = get_base_path()
-        self.config_file_path = self.base_path / "scenarios_config.yaml"
-        self.data_db_path = self.base_path / "dados_bcb.db" # Caminho para o DB de dados históricos
+        self.config_file_path = get_base_path("scenarios_config.yaml")
+        self.data_db_path = get_base_path("dados_bcb.db") # Caminho para o DB de dados históricos
         self.scenarios = []
 
         # Este frame irá conter o título e os botões de ação

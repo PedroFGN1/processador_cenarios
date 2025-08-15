@@ -1,18 +1,44 @@
 import os
+import sys
 from pathlib import Path
 
-def get_base_path():
+def get_base_path2():
     """
-    Retorna o caminho absoluto para o diretório raiz do projeto.
-    Isso é útil para localizar arquivos de configuração, bancos de dados, etc.,
-    independentemente de onde o script é executado.
+    Versão robusta com múltiplas estratégias de detecção.
+    
+    Returns:
+        Path: Caminho absoluto para o diretório raiz do projeto
     """
-    # Obtém o caminho do arquivo atual
-    current_file_path = Path(__file__).resolve()
-
-    # Navega para o diretório raiz do projeto (assumindo que este script está em utils/)
-    # Pode ser necessário ajustar se a estrutura de pastas mudar
-    base_path = current_file_path.parent.parent
-
+    if getattr(sys, 'frozen', False):
+        # Executando como executável PyInstaller
+        if hasattr(sys, '_MEIPASS'):
+            # Diretório temporário do PyInstaller existe
+            # Usar diretório do executável em vez do temporário
+            base_path = Path(sys.executable).parent
+        else:
+            # Fallback para sys.argv[0]
+            base_path = Path(os.path.dirname(sys.argv[0]))
+    else:
+        # Executando como script Python normal
+        current_file_path = Path(__file__).resolve()
+        base_path = current_file_path.parent.parent
+    
     return base_path
 
+def get_base_path(path):
+    """
+    Retorna o caminho base para encontrar os arquivos de recurso.
+    Args:
+        path (str): O caminho relativo do arquivo a ser buscado.
+    Returns:
+        str: O caminho completo para o arquivo.
+    """
+    if getattr(sys, "frozen", False):
+        # Se o programa estiver "congelado" (rodando como .exe)
+        # o caminho base é o diretório temporário _MEIPASS
+        return os.path.join(sys._MEIPASS, path)
+    else:
+        # Se estiver rodando como script .py normal
+        # O caminho base é o diretório do script principal
+        base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        return os.path.join(base_dir, path)
