@@ -5,3 +5,9 @@ previsoes.db
 /upgrades
 Scenario.spec
 build
+__pycache__
+modules/__pycache__
+methods/__pycache__
+tests/__pycache__
+persistence/__pycache__
+utils/__pycache__
