@@ -2,31 +2,38 @@
 
 ## 1. Visão Geral do Projeto
 
-O projeto "Processador de Cenários de Previsão de Séries Temporais" é uma aplicação desktop desenvolvida em Python, utilizando a biblioteca CustomTkinter para a interface gráfica. Seu objetivo principal é permitir que o usuário gerencie, execute e visualize cenários de previsão para séries temporais. A aplicação suporta a integração de diferentes modelos de previsão (ARIMA, Prophet, RandomForest) e persiste os resultados em um banco de dados SQLite.
+O projeto "Processador de Cenários de Previsão de Séries Temporais" é uma aplicação desktop desenvolvida em Python, utilizando a biblioteca CustomTkinter para a interface gráfica. O objetivo é permitir ao usuário gerenciar, executar e visualizar cenários de previsão para séries temporais, com suporte aos modelos ARIMA, Prophet e RandomForest. Os resultados são persistidos em bancos SQLite e podem ser exportados para CSV/Excel.
 
 ## 2. Estrutura do Projeto
 
-A estrutura do repositório é bem organizada e modular, facilitando a compreensão e manutenção. Os principais diretórios e arquivos são:
+A estrutura do repositório está organizada em módulos funcionais e utilitários:
 
--   `main.py`: Ponto de entrada da aplicação, responsável por inicializar a interface gráfica.
--   `app_gui.py`: Contém a lógica principal da interface do usuário, incluindo a navegação entre as diferentes seções (Gerenciar Cenários, Executar Previsões, Visualizar Resultados).
--   `config_manager_gui.py`: Lida com a interface e a lógica para adicionar, editar e remover cenários de previsão.
--   `scenarios_config.yaml`: Arquivo YAML que armazena as configurações dos cenários de previsão, carregado e manipulado pela GUI.
--   `requirements.txt`: Lista as dependências Python necessárias para o projeto.
--   `create_dummy_db.py`: Script para gerar um banco de dados SQLite de exemplo (`dados_bcb.db`) com dados históricos fictícios.
--   `methods/`: Contém módulos de orquestração de execução, como `_run_forecasting.py`, que coordena a execução de um único cenário.
--   `modules/`: Agrupa a lógica de negócio principal, incluindo:
-    -   `data_loader.py`: Responsável por carregar dados históricos do banco de dados.
-    -   `data_exporter.py`: (Não analisado em detalhes, mas presumivelmente para exportação de dados).
-    -   `forecasting_model.py`: Implementa a fábrica de modelos e as classes para ARIMA, Prophet e RandomForest.
-    -   `results_processor.py`: Processa os resultados das previsões para serem salvos no banco de dados.
-    -   `scenario_loader.py`: Carrega as configurações dos cenários do arquivo YAML.
--   `persistence/`: Contém adaptadores para persistência de dados, como `sqlite_adapter.py` para interação com o SQLite.
--   `utils/`: Módulos utilitários, como `get_base_path.py` e `logger_config.py`.
+- [`main.py`](main.py): Ponto de entrada da aplicação, inicializa a interface gráfica.
+- [`app_gui.py`](app_gui.py): Implementa a janela principal, navegação entre telas e integração dos frames de funcionalidades.
+- [`config_manager_gui.py`](config_manager_gui.py): Gerencia a configuração dos cenários, incluindo adição, edição, remoção e importação de dados históricos via CSV/Excel.
+- [`scenarios_config.yaml`](scenarios_config.yaml): Arquivo YAML que armazena as configurações dos cenários de previsão.
+- [`requirements.txt`](requirements.txt): Lista de dependências Python.
+- [`create_dummy_db.py`](create_dummy_db.py): Script para gerar o banco de dados de exemplo [`dados_bcb.db`](dados_bcb.db).
+- [`methods/_run_forecasting.py`](methods/_run_forecasting.py): Orquestra a execução de previsões para cenários individuais.
+- [`modules/`](modules): Lógica de negócio principal:
+    - [`chart_generator.py`](modules/chart_generator.py): Geração de gráficos interativos.
+    - [`data_exporter.py`](modules/data_exporter.py): Exportação de resultados para CSV/Excel.
+    - [`data_loader.py`](modules/data_loader.py): Carregamento e consolidação de dados históricos.
+    - [`forecasting_model.py`](modules/forecasting_model.py): Implementação dos modelos ARIMA, Prophet, RandomForest.
+    - [`model_evaluator.py`](modules/model_evaluator.py): Avaliação de desempenho dos modelos.
+    - [`results_processor.py`](modules/results_processor.py): Processamento dos resultados das previsões.
+    - [`scenario_loader.py`](modules/scenario_loader.py): Carregamento das configurações dos cenários.
+- [`persistence/`](persistence): Persistência de dados:
+    - [`base_adapter.py`](persistence/base_adapter.py): Interface base para adaptadores de banco.
+    - [`sqlite_adapter.py`](persistence/sqlite_adapter.py): Implementação para SQLite, manipula [`previsoes.db`](previsoes.db).
+- [`utils/`](utils): Utilitários:
+    - [`get_base_path.py`](utils/get_base_path.py): Gerenciamento de caminhos de arquivos.
+    - [`logger_config.py`](utils/logger_config.py): Configuração e integração de logging com a GUI.
+- [`tests/`](tests): Testes automatizados para todos os módulos principais.
 
 ## 3. Funcionalidades Principais
 
-A aplicação oferece as seguintes funcionalidades através de sua interface gráfica:
+A aplicação oferece as seguintes funcionalidades:
 
 ### 3.1. Gerenciamento de Cenários
 
@@ -65,18 +72,18 @@ O usuário pode iniciar a execução de todos os cenários configurados. A execu
 
 ### 3.4. Exportação de Resultados
 
-*   **Exportação para CSV:** Permite exportar todos os resultados da previsão para um arquivo CSV.
-*   **Exportação para Excel:** Permite exportar todos os resultados da previsão para um arquivo Excel.
+- Exportação dos resultados das previsões para arquivos CSV e Excel diretamente pela interface.
 
 ## 4. Arquitetura e Fluxo de Dados
 
-A arquitetura do projeto é baseada em módulos bem definidos, seguindo um fluxo lógico:
+O fluxo de dados segue etapas bem definidas:
 
-1.  **Configuração:** Cenários são definidos via GUI e salvos em `scenarios_config.yaml`.
-2.  **Carregamento de Dados:** Quando um cenário é executado, `data_loader.py` carrega os dados históricos da série especificada de `dados_bcb.db`.
-3.  **Modelagem e Previsão:** `forecasting_model.py` instancia o modelo de previsão apropriado (ARIMA, Prophet, RandomForest) com base na configuração do cenário e executa a previsão.
-4.  **Processamento de Resultados:** `results_processor.py` formata os resultados da previsão, adicionando metadados do cenário e a data de execução.
-5.  **Persistência:** `sqlite_adapter.py` é utilizado para salvar os resultados processados no banco de dados `previsoes.db`.
+1. **Configuração:** Cenários definidos via GUI e salvos em [`scenarios_config.yaml`](scenarios_config.yaml).
+2. **Carregamento de Dados:** [`data_loader.py`](modules/data_loader.py) carrega dados históricos de [`dados_bcb.db`](dados_bcb.db).
+3. **Modelagem e Previsão:** [`forecasting_model.py`](modules/forecasting_model.py) instancia e executa o modelo apropriado.
+4. **Processamento de Resultados:** [`results_processor.py`](modules/results_processor.py) formata os resultados, adicionando metadados e data de execução.
+5. **Persistência:** [`sqlite_adapter.py`](persistence/sqlite_adapter.py) salva os resultados em [`previsoes.db`](previsoes.db).
+6. **Visualização e Exportação:** Resultados exibidos na GUI, com opção de exportação via [`data_exporter.py`](modules/data_exporter.py).
 
 ## 5. Pontos Fortes e Boas Práticas
 
@@ -87,4 +94,4 @@ A arquitetura do projeto é baseada em módulos bem definidos, seguindo um fluxo
 -   **Configuração Flexível:** O uso de um arquivo YAML para cenários permite fácil configuração e modificação.
 -   **GUI Responsiva:** A execução de previsões em uma thread separada evita que a interface congele, proporcionando uma melhor experiência ao usuário.
 -   **Logging:** A presença de um sistema de logging (`logger_config.py`) ajuda no rastreamento de eventos e depuração.
-
+-   **Testes Automatizados:** A inclusão de testes unitários para os principais módulos assegura a qualidade e a robustez do código.

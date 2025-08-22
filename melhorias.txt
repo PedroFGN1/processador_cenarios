@@ -1,0 +1,12 @@
+1. Sistema de "Ranking" e Recomendação de Modelos
+- O Benefício: A aplicação já compara cenários visualmente e exibe métricas de avaliação como RMSE, MAE e MAPE. Poderíamos levar isso um passo adiante, criando um ranking automático que destaque o melhor cenário para uma determinada série temporal com base na métrica escolhida pelo usuário.
+- A Ideia Técnica: Na tela de visualização de resultados, poderíamos adicionar uma funcionalidade que, ao selecionar uma série temporal, ordenasse automaticamente todos os cenários executados para ela, destacando (por exemplo, com uma cor diferente ou um ícone) aquele com o melhor desempenho.
+
+2. Módulo de Auto-ML para Otimização de Parâmetros
+- O Benefício: Atualmente, o usuário precisa fornecer os parâmetros do modelo em formato JSON, o que exige conhecimento técnico. Um módulo de "Auto-ML" permitiria que a aplicação testasse automaticamente várias combinações de parâmetros e sugerisse a melhor, tornando a ferramenta acessível até para usuários com menos conhecimento em modelagem.
+- A Ideia Técnica: Poderíamos criar uma nova funcionalidade na tela de configuração de cenários. Ao ser ativada, ela usaria bibliotecas como GridSearchCV (do Scikit-learn) ou Optuna para rodar um processo de otimização e encontrar os melhores parâmetros para o modelo (ARIMA, RandomForest, etc.)  com base nos dados históricos.
+
+3. Pré-processamento e Engenharia de Atributos via GUI
+- O Benefício: A qualidade de uma previsão depende muito da preparação dos dados. Permitir que o usuário realize transformações simples nos dados (como diferenciação, normalização ou criação de médias móveis) diretamente pela interface gráfica, antes de treinar o modelo, daria muito mais poder e flexibilidade à ferramenta.
+- A Ideia Técnica: Adicionar uma nova etapa opcional no fluxo de configuração de cenários. Nela, o usuário poderia selecionar transformações a serem aplicadas à série temporal antes da execução da previsão. Isso impactaria o data_loader.py e o forecasting_model.py.
+
